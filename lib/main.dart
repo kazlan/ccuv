@@ -1,91 +1,185 @@
 import 'package:flutter/material.dart';
+import 'package:just_audio/just_audio.dart';
 
-void main() => runApp(const MyApp());
+void main() => runApp(const CCuVApp());
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-  static const String _title = 'Flutter Stateful Clicker Counter';
-  // This widget is the root of your application.
+class CCuVApp extends StatelessWidget {
+  const CCuVApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: _title,
+      title: 'CCuV Radio',
+      // Quitamos la cinta de "Debug"
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        // useMaterial3: false,
-        primarySwatch: Colors.blue,
+        primarySwatch: Colors.deepPurple,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: const MyHomePage(),
+      home: const HomePage(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key});
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-  // This class is the configuration for the state.
+class HomePage extends StatefulWidget {
+  const HomePage({super.key});
+
   @override
-  _MyHomePageState createState() => _MyHomePageState();
+  State<HomePage> createState() => _HomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class _HomePageState extends State<HomePage> {
+  // Instancia del reproductor de audio
+  late AudioPlayer _player;
 
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
+  // URL del stream de música online.
+  // **REEMPLAZA ESTA URL POR LA DE TU RADIO**
+  final String _streamUrl = "https://edge.mixlr.com/channel/dlyio";
+
+  // Variable para controlar el estado de reproducción
+  bool _isPlaying = false;
+  // Variable para saber si el stream está cargando
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _player = AudioPlayer();
+    _setupAudioPlayer();
+  }
+
+  void _setupAudioPlayer() async {
+    try {
+      // Configuramos la URL del stream
+      await _player.setUrl(_streamUrl);
+
+      // Nos suscribimos a los cambios de estado del reproductor
+      _player.playerStateStream.listen((state) {
+        // Actualizamos nuestro estado _isPlaying según el estado del reproductor
+        if (mounted) {
+          setState(() {
+            _isPlaying = state.playing;
+            // Dejamos de mostrar el indicador de carga cuando empieza a sonar o se detiene
+            if (state.processingState == ProcessingState.ready ||
+                state.processingState == ProcessingState.completed) {
+              _isLoading = false;
+            }
+          });
+        }
+      });
+    } catch (e) {
+      // Manejar error de carga de URL
+      print("Error al cargar la URL del stream: $e");
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        // Aquí podrías mostrar un mensaje al usuario
+      }
+    }
+  }
+
+  void _togglePlayPause() {
+    if (_isPlaying) {
+      _player.pause();
+    } else {
+      // Mostramos el indicador de carga y empezamos la reproducción
+      setState(() {
+        _isLoading = true;
+      });
+      _player.play();
+    }
+  }
+
+  @override
+  void dispose() {
+    // Es muy importante liberar los recursos del reproductor al cerrar la pantalla
+    _player.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
+    // Determinamos qué imagen de fondo usar
+    final String backgroundImage = _isPlaying
+        ? 'assets/images/playing_bg.png'
+        : 'assets/images/stopped_bg.png';
+
     return Scaffold(
-      appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: const Text('Flutter Demo Click Counter'),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
+      body: Container(
+        // El widget Container nos permite poner una imagen de fondo
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage(backgroundImage),
+            // La imagen cubrirá toda la pantalla
+            fit: BoxFit.cover,
+          ),
+        ),
+        child: Container(
+          // Añadimos una capa oscura semitransparente para que el texto y los iconos resalten
+          color: Colors.black.withOpacity(0.0),
+          child: SafeArea(
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Título de la App
+                  const Text(
+                    'CCuV',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 60,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 2.0,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'Tu música, tu momento',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 18,
+                    ),
+                  ),
+                  const SizedBox(height: 50),
+                  // Mostramos el botón o el indicador de carga
+                  _buildControlButton(),
+                ],
+              ),
             ),
-            Text(
-              '$_counter',
-              style: const TextStyle(fontSize: 25),
-            ),
-          ],
+          ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
+    );
+  }
+
+  Widget _buildControlButton() {
+    if (_isLoading) {
+      // Si está cargando, mostramos un círculo de progreso
+      return const SizedBox(
+        width: 80,
+        height: 80,
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+          strokeWidth: 5.0,
+        ),
+      );
+    }
+    // Si no está cargando, mostramos el botón de Play/Pause
+    return GestureDetector(
+      onTap: _togglePlayPause,
+      child: Container(
+        padding: const EdgeInsets.all(20.0),
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.deepPurple.withOpacity(0.5),
+          border: Border.all(color: Colors.white, width: 2),
+        ),
+        child: Icon(
+          _isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+          color: Colors.white,
+          size: 60.0,
+        ),
       ),
     );
   }
