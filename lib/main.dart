@@ -124,23 +124,23 @@ class _HomePageState extends State<HomePage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   // Título de la App
-                  const Text(
-                    'CCuV',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 60,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 2.0,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    'Tu música, tu momento',
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 18,
-                    ),
-                  ),
+                  //const Text(
+                  //   'CCuV',
+                  //   style: TextStyle(
+                  //     color: Colors.white,
+                  //     fontSize: 60,
+                  //     fontWeight: FontWeight.bold,
+                  //     letterSpacing: 2.0,
+                  //   ),
+                  // ),
+                  // const SizedBox(height: 10),
+                  // const Text(
+                  //   'Tu música, tu momento',
+                  //   style: TextStyle(
+                  //     color: Colors.white70,
+                  //     fontSize: 18,
+                  //   ),
+                  // ),
                   const SizedBox(height: 50),
                   // Mostramos el botón o el indicador de carga
                   _buildControlButton(),
